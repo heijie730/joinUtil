@@ -84,7 +84,7 @@ public class Join<L, R, J> {
         //有要以这个table为join,只能过滤掉为null的记录
         Map<String, Map<String, Object>> newResMap = mapList.stream()
 // 这里map.get(lastJoinTableName) 可能为null给方法调用者
-//  .filter(map -> map.get(lastJoinTableName) != null)
+  .filter(map -> map.get(lastJoinTableName) != null)
 //                .filter(map -> map != null)
                 //toMap 时会遇到两个key相同的情况
                 .filter(map -> keyFunction.apply(map)!= null)
