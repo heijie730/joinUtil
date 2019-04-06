@@ -16,22 +16,47 @@ public class Join<L, R, J> {
 
 
     //每join完一次要赋值
-    private List<Map<String, Object>> resList;
-
+    public List<Map<String, Object>> resList;
 
     public Join leftJoin(String lastJoinTableName,
                          Function<Object, String> lastJoinKeyFunction,
                          Function<List<String>, List<R>> rightListMappingFunction,
                          Function<R, String> rightKeyFunction,
                          String rightTableName) {
+        return join(lastJoinTableName, lastJoinKeyFunction, rightListMappingFunction, rightKeyFunction, rightTableName, false);
+    }
+
+    public Join join(String lastJoinTableName,
+                     Function<Object, String> lastJoinKeyFunction,
+                     Function<List<String>, List<R>> rightListMappingFunction,
+                     Function<R, String> rightKeyFunction,
+                     String rightTableName,
+                     boolean innerJoin) {
         //重组joinResMap的key
-
         Map<String, Map<String, Object>> newResMap = reBuildLeftJoinMap(lastJoinTableName, this.joinResMap, lastJoinKeyFunction);
-
         List<String> keyList = newResMap.keySet().stream().collect(Collectors.toList());
         List<R> rightList = rightListMappingFunction.apply(keyList);
-        return leftJoin(newResMap, rightList, rightKeyFunction, rightTableName);
-//        return leftJoin(lastJoinTableName, lastJoinKeyFunction, rightIdTableElementMap);
+        return join(newResMap, rightList, rightKeyFunction, rightTableName, innerJoin);
+    }
+
+    public Join innerJoin(String lastJoinTableName,
+                          Function<Object, String> lastJoinKeyFunction,
+                          Function<List<String>, List<R>> rightListMappingFunction,
+                          Function<R, String> rightKeyFunction,
+                          String rightTableName) {
+        Join join = leftJoin(lastJoinTableName, lastJoinKeyFunction, rightListMappingFunction, rightKeyFunction, rightTableName);
+        int max = this.resList.stream().mapToInt(map -> map.size()).max().orElse(0);
+        List<Map<String, Object>> collect = resList.stream().filter(map -> map.size() == max).collect(Collectors.toList());
+        this.resList = collect;
+        return join;
+
+    }
+
+    public Join leftJoin(Map<String, Map<String, Object>> newResMap,
+                         List<R> rightList,
+                         Function<R, String> rightKeyFunction,
+                         String rightTableName) {
+        return join(newResMap, rightList, rightKeyFunction, rightTableName, false);
     }
 
     /**
@@ -42,33 +67,16 @@ public class Join<L, R, J> {
      * @param rightTableName      右表别名
      * @return
      */
-    public Join leftJoin(Map<String, Map<String, Object>> newResMap,
-                         List<R> rightList,
-                         Function<R, String> rightKeyFunction,
-                         String rightTableName) {
+    public Join join(Map<String, Map<String, Object>> newResMap,
+                     List<R> rightList,
+                     Function<R, String> rightKeyFunction,
+                     String rightTableName,
+                     boolean innerJoin) {
         //重组joinResMap的key
-
-//        Map<String, Map<String, Object>> newResMap = reBuildLeftJoinMap(lastJoinTableName, this.joinResMap, lastJoinKeyFunction);
-
         Map<String, Map<String, Object>> rightIdTableElementMap = build(rightList, rightKeyFunction, rightTableName);
-        this.newLeftMap = leftPutAllRight(this.newLeftMap, rightIdTableElementMap);
+        leftPutAllRight(this.newLeftMap, rightIdTableElementMap, innerJoin);
         return leftJoin(newResMap, rightIdTableElementMap);
-//        return leftJoin(lastJoinTableName, lastJoinKeyFunction, rightIdTableElementMap);
     }
-
-//    private Join leftJoin(String lastJoinTableName,
-//                          Function<Object, String> lastJoinKeyFunction,
-//                          Map<String, Map<String, Object>> rightIdTableElementMap) {
-//        //重组joinResMap的key
-//        Function<Map<String, Object>, String> keyFunction = map -> {
-//            Object o = map.get(lastJoinTableName);
-//            //o可能为null
-//            return lastJoinKeyFunction.apply(o);
-//        };
-//        Map<String, Map<String, Object>> newResMap = reBuildLeftJoinMap(lastJoinTableName, this.joinResMap, keyFunction);
-//
-//        return leftJoin(newResMap, rightIdTableElementMap);
-//    }
 
     private Map<String, Map<String, Object>> reBuildLeftJoinMap(String lastJoinTableName,
                                                                 Map<String, Map<String, Object>> oldMap,
@@ -84,10 +92,10 @@ public class Join<L, R, J> {
         //有要以这个table为join,只能过滤掉为null的记录
         Map<String, Map<String, Object>> newResMap = mapList.stream()
 // 这里map.get(lastJoinTableName) 可能为null给方法调用者
-  .filter(map -> map.get(lastJoinTableName) != null)
+                .filter(map -> map.get(lastJoinTableName) != null)
 //                .filter(map -> map != null)
                 //toMap 时会遇到两个key相同的情况
-                .filter(map -> keyFunction.apply(map)!= null)
+                .filter(map -> keyFunction.apply(map) != null)
                 .collect(Collectors.toMap(map -> keyFunction.apply(map), map -> map, (a, b) -> b));
         return newResMap;
     }
@@ -127,28 +135,30 @@ public class Join<L, R, J> {
         return newResMap;
     }
 
-    public Join leftJoin(List<L> leftList,
-                         Function<L, String> leftKeyFunction,
-                         String leftTableName,
-                         List<R> rightList,
-                         Function<R, String> rightKeyFunction,
-                         String rightTableName) {
+    public Join join(List<L> leftList,
+                     Function<L, String> leftKeyFunction,
+                     String leftTableName,
+                     List<R> rightList,
+                     Function<R, String> rightKeyFunction,
+                     String rightTableName,
+                     boolean innerJoin) {
         Map<String, Map<String, Object>> leftIdTableElementMap = build(leftList, leftKeyFunction, leftTableName);
         Map<String, Map<String, Object>> rightIdTableElementMap = build(rightList, rightKeyFunction, rightTableName);
-        this.newLeftMap = leftPutAllRight(leftIdTableElementMap, rightIdTableElementMap);
+         leftPutAllRight(leftIdTableElementMap, rightIdTableElementMap, innerJoin);
         return leftJoin(leftIdTableElementMap, rightIdTableElementMap);
     }
 
-    public Join innerJoin(List<L> leftList,
-                          Function<L, String> leftKeyFunction,
-                          String leftTableName,
-                          List<R> rightList,
-                          Function<R, String> rightKeyFunction,
-                          String rightTableName) {
-        Map<String, Map<String, Object>> leftIdTableElementMap = build(leftList, leftKeyFunction, leftTableName);
-        Map<String, Map<String, Object>> rightIdTableElementMap = build(rightList, rightKeyFunction, rightTableName);
-        return innerJoin(leftIdTableElementMap, rightIdTableElementMap);
-    }
+
+//    public Join innerJoin(List<L> leftList,
+//                          Function<L, String> leftKeyFunction,
+//                          String leftTableName,
+//                          List<R> rightList,
+//                          Function<R, String> rightKeyFunction,
+//                          String rightTableName) {
+//        //取能join到左右元素的map
+//        join(leftList, leftKeyFunction, leftTableName, rightList, rightKeyFunction, rightTableName,true);
+//        return this;
+//    }
 
 
     private Map<String, Map<String, Object>> build(List list,
@@ -183,12 +193,12 @@ public class Join<L, R, J> {
         this.joinResMap = MergeUtil.leftJoin(leftIdTableElementMap, rightIdTableElementMap);
 //        this.resList = this.joinResMap.values().stream().collect(Collectors.toList());
         //leftJoin永远时左边putAll右边
-        this.resList = this.newLeftMap.values().stream().collect(Collectors.toList());
         return this;
     }
 
-    private Map<String, Map<String, Object>> leftPutAllRight(Map<String, Map<String, Object>> leftIdTableElementMap,
-                                                             Map<String, Map<String, Object>> rightIdTableElementMap) {
+    private void leftPutAllRight(Map<String, Map<String, Object>> leftIdTableElementMap,
+                                                             Map<String, Map<String, Object>> rightIdTableElementMap,
+                                                             boolean innerJoin) {
         Set<String> leftKeys = leftIdTableElementMap.keySet();
         Map<String, Map<String, Object>> newLeftMap = leftKeys.stream().collect(Collectors.toMap(key -> key, key -> {
             Map<String, Object> leftMap = leftIdTableElementMap.get(key);
@@ -198,7 +208,18 @@ public class Join<L, R, J> {
             }
             return leftMap;
         }));
-        return newLeftMap;
+        this.newLeftMap = newLeftMap;
+        this.resList = this.newLeftMap.values().stream().collect(Collectors.toList());
+        if (innerJoin) {
+            int max = this.resList.stream().mapToInt(map -> map.size()).max().orElse(0);
+            List<Map<String, Object>> collect = this.resList.stream().filter(map -> map.size() == max).collect(Collectors.toList());
+            this.resList = collect;
+
+            int max2 = this.newLeftMap.values().stream().mapToInt(map -> map.values().size()).max().orElse(0);
+            Set<String> keys = newLeftMap.keySet();
+            Map<String, Map<String, Object>> newMap = keys.stream().filter(key -> newLeftMap.get(key).values().size() == max2).collect(Collectors.toMap(key -> key, key -> newLeftMap.get(key)));
+            this.newLeftMap=newMap;
+        }
     }
 
     private Join innerJoin(Map<String, Map<String, Object>> leftIdTableElementMap,

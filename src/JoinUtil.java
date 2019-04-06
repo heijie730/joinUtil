@@ -14,7 +14,7 @@ public class JoinUtil {
                                           List<R> rightList,
                                           Function<R, String> rightKeyFunction,
                                           String rightTableName) {
-        return new Join<L, R, J>().leftJoin(leftList, leftKeyFunction, leftTableName, rightList, rightKeyFunction, rightTableName);
+        return new Join<L, R, J>().join(leftList, leftKeyFunction, leftTableName, rightList, rightKeyFunction, rightTableName,false);
     }
 
     public static <L, R, J> Join innerJoin(List<L> leftList,
@@ -23,6 +23,6 @@ public class JoinUtil {
                                            List<R> rightList,
                                            Function<R, String> rightKeyFunction,
                                            String rightTableName) {
-        return new Join<L, R, J>().innerJoin(leftList, leftKeyFunction, leftTableName, rightList, rightKeyFunction, rightTableName);
+        return new Join<L, R, J>().join(leftList, leftKeyFunction, leftTableName, rightList, rightKeyFunction, rightTableName,true);
     }
 }
