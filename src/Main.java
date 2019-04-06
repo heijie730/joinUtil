@@ -22,7 +22,7 @@ public class Main {
 
         Order order1 = new Order().setId("o1").setUserId("u1").setOrderName("小明的订单");
         Order order2 = new Order().setId("o2").setUserId("u2").setOrderName("小红的订单");
-        Order order3 = new Order().setId("o3").setUserId("u3").setOrderName("小张的订单");
+        Order order3 = new Order().setId("o3").setUserId("u2").setOrderName("小张的订单");
         List<Order> orderList = new ArrayList<>();
         orderList.add(order1);
         orderList.add(order2);
@@ -37,7 +37,11 @@ public class Main {
         returnOrderList.add(returnOrder3);
 
         Join join = JoinUtil.leftJoin(userList, x -> x.getId(), "user", orderList, x -> x.getUserId(), "order")
-                .leftJoin("order", x -> Optional.ofNullable(x).map(e -> (Order) e).map(Order::getId), x->returnOrderList, x -> ((ReturnOrder) x).getOrderId(), "returnOrder");
+                .leftJoin("order", x -> Optional.ofNullable(x)
+                        .map(e->(List)e)
+                        .map(e -> (Order) e.get(0))
+                        .map(Order::getId), x->returnOrderList, x -> ((ReturnOrder) x).getOrderId(), "returnOrder");
+//                .leftJoin("order", x -> Optional.ofNullable(x).map(e -> (Order) e).map(Order::getId), x->returnOrderList, x -> ((ReturnOrder) x).getOrderId(), "returnOrder");
 //        List mappingList = join.mapping((x) -> {
 //            Map map = (Map) x;
 //            User user = (User) map.getOrDefault("user", new User());

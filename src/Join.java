@@ -154,13 +154,26 @@ public class Join<L, R, J> {
     private Map<String, Map<String, Object>> build(List list,
                                                    Function function,
                                                    String tableName) {
-        Map<String, Map<String, Object>> idTableElementMap =
-                (Map<String, Map<String, Object>>) list.stream().collect(Collectors.toMap(k -> function.apply(k), v -> {
-                    Map<String, Object> tableElementMap = new HashMap(2);
-                    tableElementMap.put(tableName, v);
-                    return tableElementMap;
-                }));
-        return idTableElementMap;
+//        long count = list.stream().map(k -> function.apply(k)).distinct().count();
+        Map<String, List<Object>> map = (Map) list.stream().collect(Collectors.groupingBy(k -> function.apply(k), Collectors.toList()));
+        if (map.size() < list.size()) {
+            //表示有重复的,需要把重复的收集为list
+            Map<String, Map<String, Object>> idTableElementListMap = map.keySet().stream().collect(Collectors.toMap(key -> key, key -> {
+                List<Object> objectList = map.get(key);
+                Map<String, Object> tableElementMap = new HashMap(2);
+                tableElementMap.put(tableName, objectList);
+                return tableElementMap;
+            }));
+            return idTableElementListMap;
+        } else {
+            Map<String, Map<String, Object>> idTableElementMap =
+                    (Map<String, Map<String, Object>>) list.stream().collect(Collectors.toMap(k -> function.apply(k), v -> {
+                        Map<String, Object> tableElementMap = new HashMap(2);
+                        tableElementMap.put(tableName, v);
+                        return tableElementMap;
+                    }));
+            return idTableElementMap;
+        }
     }
 
 
