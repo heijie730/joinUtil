@@ -1,6 +1,7 @@
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 时间： 2019年04月05日  10时04分
@@ -88,13 +89,17 @@ public class Join<L, R, J> {
         };
         //mapList可能有table的值为null
         //有要以这个table为join,只能过滤掉为null的记录
-        Map<String, Map<String, Object>> newResMap = this.resList.stream()
-// 这里map.get(lastJoinTableName) 可能为null给方法调用者
-                .filter(map -> map.get(lastJoinTableName) != null)
-//                .filter(map -> map != null)
-                //toMap 时会遇到两个key相同的情况
-                .filter(map -> keyFunction.apply(map) != null)
-                .collect(Collectors.toMap(map -> keyFunction.apply(map), map -> map, (a, b) -> b));
+        List<Object> objectList = (List)this.resList.stream().filter(map -> map.get(lastJoinTableName) != null).map(map -> map.get(lastJoinTableName))
+                .flatMap(object-> ((List)object).stream()).collect(Collectors.toList());
+        Map<String, Map<String, Object>> newResMap = build(objectList, lastJoinKeyFunction, lastJoinTableName);
+
+//        Map<String, Map<String, Object>> newResMap = this.resList.stream()
+//// 这里map.get(lastJoinTableName) 可能为null给方法调用者
+//                .filter(map -> map.get(lastJoinTableName) != null)
+////                .filter(map -> map != null)
+//                //toMap 时会遇到两个key相同的情况
+//                .filter(map -> keyFunction.apply(map) != null)
+//                .collect(Collectors.toMap(map -> keyFunction.apply(map), map -> map, (a, b) -> b));
         return newResMap;
     }
 
@@ -142,7 +147,7 @@ public class Join<L, R, J> {
                      boolean innerJoin) {
         Map<String, Map<String, Object>> leftIdTableElementMap = build(leftList, leftKeyFunction, leftTableName);
         Map<String, Map<String, Object>> rightIdTableElementMap = build(rightList, rightKeyFunction, rightTableName);
-         leftPutAllRight(leftIdTableElementMap, rightIdTableElementMap, innerJoin);
+        leftPutAllRight(leftIdTableElementMap, rightIdTableElementMap, innerJoin);
         return leftJoin(leftIdTableElementMap, rightIdTableElementMap);
     }
 
@@ -195,8 +200,8 @@ public class Join<L, R, J> {
     }
 
     private void leftPutAllRight(Map<String, Map<String, Object>> leftIdTableElementMap,
-                                                             Map<String, Map<String, Object>> rightIdTableElementMap,
-                                                             boolean innerJoin) {
+                                 Map<String, Map<String, Object>> rightIdTableElementMap,
+                                 boolean innerJoin) {
         Set<String> leftKeys = leftIdTableElementMap.keySet();
         Map<String, Map<String, Object>> newLeftMap = leftKeys.stream().collect(Collectors.toMap(key -> key, key -> {
             Map<String, Object> leftMap = leftIdTableElementMap.get(key);
@@ -216,7 +221,7 @@ public class Join<L, R, J> {
             int max2 = this.newLeftMap.values().stream().mapToInt(map -> map.values().size()).max().orElse(0);
             Set<String> keys = newLeftMap.keySet();
             Map<String, Map<String, Object>> newMap = keys.stream().filter(key -> newLeftMap.get(key).values().size() == max2).collect(Collectors.toMap(key -> key, key -> newLeftMap.get(key)));
-            this.newLeftMap=newMap;
+            this.newLeftMap = newMap;
         }
     }
 
