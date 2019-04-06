@@ -86,11 +86,9 @@ public class Join<L, R, J> {
             //o可能为null
             return lastJoinKeyFunction.apply(o);
         };
-//        List<Map<String, Object>> mapList = oldMap.values().stream().collect(Collectors.toList());
-        List<Map<String, Object>> mapList = this.resList;
         //mapList可能有table的值为null
         //有要以这个table为join,只能过滤掉为null的记录
-        Map<String, Map<String, Object>> newResMap = mapList.stream()
+        Map<String, Map<String, Object>> newResMap = this.resList.stream()
 // 这里map.get(lastJoinTableName) 可能为null给方法调用者
                 .filter(map -> map.get(lastJoinTableName) != null)
 //                .filter(map -> map != null)
