@@ -47,7 +47,7 @@ public class Main {
 //                .leftJoin("order", x -> Optional.ofNullable(x).map(e -> (Order) e).map(Order::getId), x->returnOrderList, x -> ((ReturnOrder) x).getOrderId(), "returnOrder");
 
         Join join = JoinUtil.leftJoin(userList, x -> x.getId(), "user", orderList, x -> x.getUserId(), "order")
-                .leftJoin("order", x -> Optional.ofNullable(x).map(e -> (Order) e).map(Order::getId), x->returnOrderList, x -> ((ReturnOrder) x).getOrderId(), "returnOrder");
+                .leftJoin("order", x -> ((Order) x).getId(), x->returnOrderList, x -> ((ReturnOrder) x).getOrderId(), "returnOrder");
 //                .leftJoin("user", x -> Optional.ofNullable(x).map(e -> (User) e).map(User::getId), x->returnOrderList, x -> ((ReturnOrder) x).getUserId(), "returnOrder");
 
         System.out.println("[test1 - list] --> [join1 -> user.id = order.userId , join2 -> order.id = returnOrder.orderId ]  --->");

@@ -20,7 +20,7 @@ public class Join<L, R, J> {
 
 
     public Join leftJoin(String lastJoinTableName,
-                         Function<Object, Optional<String>> lastJoinKeyFunction,
+                         Function<Object, String> lastJoinKeyFunction,
                          Function<List<String>, List<R>> rightListMappingFunction,
                          Function<R, String> rightKeyFunction,
                          String rightTableName) {
@@ -57,10 +57,10 @@ public class Join<L, R, J> {
     }
 
 //    private Join leftJoin(String lastJoinTableName,
-//                          Function<Object, Optional<String>> lastJoinKeyFunction,
+//                          Function<Object, String> lastJoinKeyFunction,
 //                          Map<String, Map<String, Object>> rightIdTableElementMap) {
 //        //重组joinResMap的key
-//        Function<Map<String, Object>, Optional<String>> keyFunction = map -> {
+//        Function<Map<String, Object>, String> keyFunction = map -> {
 //            Object o = map.get(lastJoinTableName);
 //            //o可能为null
 //            return lastJoinKeyFunction.apply(o);
@@ -72,8 +72,8 @@ public class Join<L, R, J> {
 
     private Map<String, Map<String, Object>> reBuildLeftJoinMap(String lastJoinTableName,
                                                                 Map<String, Map<String, Object>> oldMap,
-                                                                Function<Object, Optional<String>> lastJoinKeyFunction) {
-        Function<Map<String, Object>, Optional<String>> keyFunction = map -> {
+                                                                Function<Object, String> lastJoinKeyFunction) {
+        Function<Map<String, Object>, String> keyFunction = map -> {
             Object o = map.get(lastJoinTableName);
             //o可能为null
             return lastJoinKeyFunction.apply(o);
@@ -87,8 +87,8 @@ public class Join<L, R, J> {
 //  .filter(map -> map.get(lastJoinTableName) != null)
 //                .filter(map -> map != null)
                 //toMap 时会遇到两个key相同的情况
-                .filter(map -> keyFunction.apply(map).orElse(null) != null)
-                .collect(Collectors.toMap(map -> keyFunction.apply(map).orElse(null), map -> map, (a, b) -> b));
+                .filter(map -> keyFunction.apply(map)!= null)
+                .collect(Collectors.toMap(map -> keyFunction.apply(map), map -> map, (a, b) -> b));
         return newResMap;
     }
 
