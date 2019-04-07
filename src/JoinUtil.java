@@ -14,8 +14,18 @@ public class JoinUtil {
                                           List<R> rightList,
                                           Function<R, String> rightKeyFunction,
                                           String rightTableName) {
-        return new Join<L, R, J>().join(leftList, leftKeyFunction, leftTableName, rightList, rightKeyFunction, rightTableName,false);
+        return new Join<L, R, J>().join(leftList, leftKeyFunction, leftTableName, rightList, rightKeyFunction, rightTableName, false);
     }
+
+    public static <L, R, J> Join leftJoin(List<L> leftList,
+                                          Function<L, String> leftKeyFunction,
+                                          String leftTableName,
+                                          Function<List<String>, List<R>> rightListFunction,
+                                          Function<R, String> rightKeyFunction,
+                                          String rightTableName) {
+        return new Join<L, R, J>().join(leftList, leftKeyFunction, leftTableName, rightListFunction, rightKeyFunction, rightTableName, false);
+    }
+
 
     public static <L, R, J> Join innerJoin(List<L> leftList,
                                            Function<L, String> leftKeyFunction,
@@ -23,6 +33,14 @@ public class JoinUtil {
                                            List<R> rightList,
                                            Function<R, String> rightKeyFunction,
                                            String rightTableName) {
-        return new Join<L, R, J>().join(leftList, leftKeyFunction, leftTableName, rightList, rightKeyFunction, rightTableName,true);
+        return new Join<L, R, J>().join(leftList, leftKeyFunction, leftTableName, rightList, rightKeyFunction, rightTableName, true);
+    }
+    public static <L, R, J> Join innerJoin(List<L> leftList,
+                                           Function<L, String> leftKeyFunction,
+                                           String leftTableName,
+                                           Function<List<String>, List<R>> rightListFunction,
+                                           Function<R, String> rightKeyFunction,
+                                           String rightTableName) {
+        return new Join<L, R, J>().join(leftList, leftKeyFunction, leftTableName, rightListFunction, rightKeyFunction, rightTableName, true);
     }
 }
