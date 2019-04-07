@@ -1,3 +1,4 @@
+
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -7,16 +8,9 @@ import java.util.stream.Collectors;
  * 作者： lcx
  * 备注：
  **/
-public class Join<L, R, J> {
+public class Join<L, R> {
 
-    //join的中介map
-    private Map<String, Map<String, Object>> leftJoinMap;
-    //join的结果amp
-    private Map<String, Map<String, Object>> resMap;
-
-    //join的结果list
-    //每join完一次要赋值
-    public List<Map<String, Object>> resList;
+    private List<JoinNode> joinNodeList;
 
     public Join leftJoin(String lastJoinTableName,
                          Function<Object, String> lastJoinKeyFunction,
@@ -26,65 +20,46 @@ public class Join<L, R, J> {
         return join(lastJoinTableName, lastJoinKeyFunction, rightListMappingFunction, rightKeyFunction, rightTableName, false);
     }
 
+    public Join innerJoin(String lastJoinTableName,
+                          Function<Object, String> lastJoinKeyFunction,
+                          Function<List<String>, List<R>> rightListMappingFunction,
+                          Function<R, String> rightKeyFunction,
+                          String rightTableName) {
+        return join(lastJoinTableName, lastJoinKeyFunction, rightListMappingFunction, rightKeyFunction, rightTableName, true);
+    }
+
     public Join join(String lastJoinTableName,
                      Function<Object, String> lastJoinKeyFunction,
                      Function<List<String>, List<R>> rightListMappingFunction,
                      Function<R, String> rightKeyFunction,
                      String rightTableName,
                      boolean innerJoin) {
-        //重组joinResMap的key
-        Map<String, Map<String, Object>> newResMap = reBuildLeftJoinMap(lastJoinTableName, this.leftJoinMap, lastJoinKeyFunction);
-        List<String> keyList = newResMap.keySet().stream().collect(Collectors.toList());
+        //重新定义外键
+        this.joinNodeList.stream().forEach(node -> {
+            Map<String, Object> objectMap = node.getJoinRes();
+            Object o = objectMap.get(lastJoinTableName);
+            if (o != null) {
+                node.setKey(lastJoinKeyFunction.apply(o));
+            } else {
+                node.setKey(null);
+            }
+        });
+        List<String> keyList = this.joinNodeList.stream().map(node -> node.getKey()).filter(key -> key != null).collect(Collectors.toList());
         System.out.println("[leftKeys]=" + keyList.toString());
         List<R> rightList = rightListMappingFunction.apply(keyList);
-        return join(newResMap, rightList, rightKeyFunction, rightTableName, innerJoin);
+        return join(this.joinNodeList, rightList, rightKeyFunction, rightTableName, innerJoin);
     }
 
-    public Join innerJoin(String lastJoinTableName,
-                          Function<Object, String> lastJoinKeyFunction,
-                          Function<List<String>, List<R>> rightListMappingFunction,
-                          Function<R, String> rightKeyFunction,
-                          String rightTableName) {
-        Join join = leftJoin(lastJoinTableName, lastJoinKeyFunction, rightListMappingFunction, rightKeyFunction, rightTableName);
-        int max = this.resList.stream().mapToInt(map -> map.size()).max().orElse(0);
-        List<Map<String, Object>> collect = resList.stream().filter(map -> map.size() == max).collect(Collectors.toList());
-        this.resList = collect;
-        return join;
-
-    }
-
-    public Join join(Map<String, Map<String, Object>> newResMap,
+    public Join join(List<JoinNode> leftJoinNodeList,
                      List<R> rightList,
                      Function<R, String> rightKeyFunction,
                      String rightTableName,
                      boolean innerJoin) {
         //重组joinResMap的key
-        Map<String, Map<String, Object>> rightIdTableElementMap = buildJoinMap(rightList, rightKeyFunction, rightTableName);
-        leftPutAllRight(this.resMap, rightIdTableElementMap, innerJoin);
-        return join(newResMap, rightIdTableElementMap);
+        List<JoinNode> rightJoinNodeList = buildJoinList(rightList, rightKeyFunction, rightTableName);
+        return join(leftJoinNodeList, rightJoinNodeList, innerJoin);
     }
 
-    private Map<String, Map<String, Object>> reBuildLeftJoinMap(String lastJoinTableName,
-                                                                Map<String, Map<String, Object>> oldMap,
-                                                                Function<Object, String> lastJoinKeyFunction) {
-        Map<String, String> relationMap = new HashMap();
-        oldMap.forEach((k, v) -> {
-            Object o = v.get(lastJoinTableName);
-            if (o != null) {
-                if (o instanceof List) {
-                    List list = (List) o;
-                    list.forEach(e -> relationMap.put(lastJoinKeyFunction.apply(e), k));
-                } else {
-                    relationMap.put(lastJoinKeyFunction.apply(o), k);
-                }
-            }
-        });
-        Map<String, Map<String, Object>> newResMap = new HashMap<>();
-        relationMap.forEach((k, v) ->
-                newResMap.put(k, oldMap.get(v))
-        );
-        return newResMap;
-    }
 
     public Join join(List<L> leftList,
                      Function<L, String> leftKeyFunction,
@@ -93,111 +68,91 @@ public class Join<L, R, J> {
                      Function<R, String> rightKeyFunction,
                      String rightTableName,
                      boolean innerJoin) {
-        this.leftJoinMap = leftList.stream().collect(Collectors.groupingBy(left -> leftKeyFunction.apply(left), Collectors.toMap(k -> leftTableName, left -> left)));
-        this.resList = this.leftJoinMap.values().stream().collect(Collectors.toList());
-        List<String> leftKeys = this.leftJoinMap.keySet().stream().collect(Collectors.toList());
+        this.joinNodeList = buildJoinList(leftList, leftKeyFunction, leftTableName);
+        List<String> leftKeys = this.joinNodeList.stream().filter(node -> node.getKey() != null).map(node -> node.getKey()).collect(Collectors.toList());
         System.out.println("[leftKeys]= " + leftKeys.toString());
         List<R> rightList = rightListFunction.apply(leftKeys);
-        return join(leftList, leftKeyFunction, leftTableName, rightList, rightKeyFunction, rightTableName, innerJoin);
+        return join(rightList, rightKeyFunction, rightTableName, innerJoin);
     }
 
-    public Join join(List<L> leftList,
-                     Function<L, String> leftKeyFunction,
-                     String leftTableName,
-                     List<R> rightList,
+    public Join join(List<R> rightList,
                      Function<R, String> rightKeyFunction,
                      String rightTableName,
                      boolean isInnerJoin) {
-//        Map<String, Map<String, Object>> leftMap = buildJoinMap(leftList, leftKeyFunction, leftTableName);
-        Map<String, Map<String, Object>> rightMap = buildJoinMap(rightList, rightKeyFunction, rightTableName);
-        leftPutAllRight(this.leftJoinMap, rightMap, isInnerJoin);
-        return join(this.leftJoinMap, rightMap);
+        List<JoinNode> rightJoinNodeList = buildJoinList(rightList, rightKeyFunction, rightTableName);
+        return join(this.joinNodeList, rightJoinNodeList, isInnerJoin);
     }
 
-    private Map<String, Map<String, Object>> buildJoinMap(List list,
-                                                          Function function,
-                                                          String tableName) {
-        Map<String, List<Object>> map = (Map) list.stream().collect(Collectors.groupingBy(k -> function.apply(k), Collectors.toList()));
-        Map<String, Map<String, Object>> resMap;
-//        if (map.size() < list.size()) {
-        //表示有重复的,需要把重复的收集为list
-        resMap = map.keySet().stream().collect(Collectors.toMap(key -> key, key -> {
-            List<Object> objectList = map.get(key);
-            Map<String, Object> objectListMap = new HashMap(2);
-            objectListMap.put(tableName, objectList);
-            return objectListMap;
-        }));
-//        } else {
-//            //表示没有重复,list里面只有一个元素
-//            resMap = map.keySet().stream().collect(Collectors.toMap(key -> key, key -> {
-//                List<Object> objectList = map.get(key);
-//                Map<String, Object> objectListMap = new HashMap(2);
-//                objectListMap.put(tableName, objectList.get(0));
-//                return objectListMap;
-//
-//            }));
-
-//                    (Map<String, Map<String, Object>>) list.stream().collect(Collectors.toMap(object -> function.apply(object), object -> {
-//                        Map<String, Object> objectMap = new HashMap(2);
-//                        objectMap.put(tableName, object);
-//                        return objectMap;
-//                    }));
-//        }
-        return resMap;
-    }
-
-    private void leftPutAllRight(Map<String, Map<String, Object>> leftIdTableElementMap,
-                                 Map<String, Map<String, Object>> rightIdTableElementMap,
-                                 boolean innerJoin) {
-        Set<String> leftKeys = leftIdTableElementMap.keySet();
-        Map<String, Map<String, Object>> newLeftMap = leftKeys.stream().collect(Collectors.toMap(key -> key, key -> {
-            Map<String, Object> leftMap = leftIdTableElementMap.get(key);
-            Map<String, Object> rightMap = rightIdTableElementMap.get(key);
-            if (rightMap != null) {
-                leftMap.putAll(rightMap);
-            }
-            return leftMap;
-        }));
-        this.resMap = newLeftMap;
-        this.resList = this.resMap.values().stream().collect(Collectors.toList());
-        if (innerJoin) {
-            int max = this.resList.stream().mapToInt(map -> map.size()).max().orElse(0);
-            List<Map<String, Object>> collect = this.resList.stream().filter(map -> map.size() == max).collect(Collectors.toList());
-            this.resList = collect;
-            int max2 = this.resMap.values().stream().mapToInt(map -> map.values().size()).max().orElse(0);
-            Set<String> keys = newLeftMap.keySet();
-            Map<String, Map<String, Object>> newMap = keys.stream().filter(key -> newLeftMap.get(key).values().size() == max2).collect(Collectors.toMap(key -> key, key -> newLeftMap.get(key)));
-            this.resMap = newMap;
-        }
+    private List<JoinNode> buildJoinList(List list,
+                                         Function function,
+                                         String tableName) {
+        List<JoinNode> joinNodeList = (List) list.stream().map(o -> {
+            String key = String.valueOf(function.apply(o));
+            Map map = new HashMap();
+            map.put(tableName, o);
+            JoinNode joinNode = new JoinNode().setKey(key).setJoinRes(map);
+            return joinNode;
+        }).collect(Collectors.toList());
+        return joinNodeList;
     }
 
     //join底层方法
-    private Join join(Map<String, Map<String, Object>> leftMap,
-                      Map<String, Map<String, Object>> rightMap) {
-        Set<String> leftKeys = leftMap.keySet();
-        //  id --> tableName -->  element
-        Map<String, Map<String, Object>> joinResMap = leftKeys.stream().collect(Collectors.toMap(k -> k, v -> {
-            Map<String, Object> leftRow = leftMap.get(v);
-            Map<String, Object> rightRow = rightMap.get(v);
-            if (rightRow != null) {
-                leftRow.putAll(rightRow);
+    private Join join(List<JoinNode> leftList,
+                      List<JoinNode> rightList,
+                      boolean innerJoin) {
+        List<JoinNode> mergeJoinNodeList = new ArrayList<>();
+        leftList.forEach(leftNode -> {
+            String key = leftNode.getKey();
+            List<JoinNode> rightNodeList = findByKey(rightList, key);
+            if (rightNodeList.size() > 1) {
+                rightNodeList.forEach(rightNode -> {
+                    JoinNode joinNode = new JoinNode().setKey(key);
+                    Map<String, Object> rightNodeMap = rightNode.getJoinRes();
+                    Map<String, Object> map = new HashMap<>();
+                    map.putAll(leftNode.getJoinRes());
+                    if (rightNodeMap != null) {
+                        map.putAll(rightNodeMap);
+                    }
+                    joinNode.setJoinRes(map);
+                    mergeJoinNodeList.add(joinNode);
+                });
+            } else {
+                JoinNode joinNode = new JoinNode().setKey(key);
+                Map<String, Object> map = new HashMap<>();
+                map.putAll(leftNode.getJoinRes());
+                if (rightNodeList.size() == 1) {
+                    JoinNode joinNode1 = rightNodeList.get(0);
+                    Map<String, Object> rightMap = joinNode1.getJoinRes();
+                    if (rightMap != null) {
+                        map.putAll(rightMap);
+                    }
+                }
+                joinNode.setJoinRes(map);
+                mergeJoinNodeList.add(joinNode);
             }
-            return leftRow;
-        }));
-        this.leftJoinMap = joinResMap;
+        });
+        this.joinNodeList = mergeJoinNodeList;
+        if (innerJoin) {
+            // 对结果裁剪
+            int max = this.joinNodeList.stream().map(JoinNode::getJoinRes).mapToInt(map -> map.size()).max().orElse(0);
+            List<JoinNode> collect1 = this.joinNodeList.stream().filter(node -> node.getJoinRes().size() == max).collect(Collectors.toList());
+            this.joinNodeList = collect1;
+        }
         return this;
     }
 
-    public Map<String, Map<String, Object>> getResMap() {
-        return this.leftJoinMap;
+    private List<JoinNode> findByKey(List<JoinNode> joinNodeList, String key) {
+        Objects.requireNonNull(key);
+        return joinNodeList.stream().filter(node -> key.equals(node.getKey())).collect(Collectors.toList());
     }
 
-    public List<J> mapping(Function<Map<String, Object>, J> mappingFunction) {
-        List<Map<String, Object>> mapList = this.resList;
-        return mapList.stream().map(mappingFunction::apply).collect(Collectors.toList());
+    public List<JoinNode> getJoinNodeList() {
+        return this.joinNodeList;
     }
 
-    public List<Map<String, Object>> getResList() {
-        return resList;
+    public List<Map<String, Object>> getResLsit() {
+        List<Map<String, Object>> mapList = this.joinNodeList.stream().map(node -> node.getJoinRes()).collect(Collectors.toList());
+        return mapList;
     }
+
 }
