@@ -10,9 +10,9 @@ import java.util.stream.Collectors;
 public class Join<L, R, J> {
 
     //join的中介map
-    private Map<String, Map<String, Object>> joinResMap;
+    private Map<String, Map<String, Object>> leftJoinMap;
     //join的结果amp
-    private Map<String, Map<String, Object>> newLeftMap;
+    private Map<String, Map<String, Object>> resMap;
 
     //join的结果list
     //每join完一次要赋值
@@ -33,9 +33,9 @@ public class Join<L, R, J> {
                      String rightTableName,
                      boolean innerJoin) {
         //重组joinResMap的key
-        Map<String, Map<String, Object>> newResMap = reBuildLeftJoinMap(lastJoinTableName, this.joinResMap, lastJoinKeyFunction);
+        Map<String, Map<String, Object>> newResMap = reBuildLeftJoinMap(lastJoinTableName, this.leftJoinMap, lastJoinKeyFunction);
         List<String> keyList = newResMap.keySet().stream().collect(Collectors.toList());
-        System.out.println("[leftKeys]="+keyList.toString());
+        System.out.println("[leftKeys]=" + keyList.toString());
         List<R> rightList = rightListMappingFunction.apply(keyList);
         return join(newResMap, rightList, rightKeyFunction, rightTableName, innerJoin);
     }
@@ -59,8 +59,8 @@ public class Join<L, R, J> {
                      String rightTableName,
                      boolean innerJoin) {
         //重组joinResMap的key
-        Map<String, Map<String, Object>> rightIdTableElementMap = buildMap(rightList, rightKeyFunction, rightTableName);
-        leftPutAllRight(this.newLeftMap, rightIdTableElementMap, innerJoin);
+        Map<String, Map<String, Object>> rightIdTableElementMap = buildJoinMap(rightList, rightKeyFunction, rightTableName);
+        leftPutAllRight(this.resMap, rightIdTableElementMap, innerJoin);
         return join(newResMap, rightIdTableElementMap);
     }
 
@@ -93,7 +93,9 @@ public class Join<L, R, J> {
                      Function<R, String> rightKeyFunction,
                      String rightTableName,
                      boolean innerJoin) {
-        List<String> leftKeys = leftList.stream().map(leftKeyFunction::apply).collect(Collectors.toList());
+        this.leftJoinMap = leftList.stream().collect(Collectors.groupingBy(left -> leftKeyFunction.apply(left), Collectors.toMap(k -> leftTableName, left -> left)));
+        this.resList = this.leftJoinMap.values().stream().collect(Collectors.toList());
+        List<String> leftKeys = this.leftJoinMap.keySet().stream().collect(Collectors.toList());
         System.out.println("[leftKeys]= " + leftKeys.toString());
         List<R> rightList = rightListFunction.apply(leftKeys);
         return join(leftList, leftKeyFunction, leftTableName, rightList, rightKeyFunction, rightTableName, innerJoin);
@@ -106,15 +108,15 @@ public class Join<L, R, J> {
                      Function<R, String> rightKeyFunction,
                      String rightTableName,
                      boolean isInnerJoin) {
-        Map<String, Map<String, Object>> leftMap = buildMap(leftList, leftKeyFunction, leftTableName);
-        Map<String, Map<String, Object>> rightMap = buildMap(rightList, rightKeyFunction, rightTableName);
-        leftPutAllRight(leftMap, rightMap, isInnerJoin);
-        return join(leftMap, rightMap);
+//        Map<String, Map<String, Object>> leftMap = buildJoinMap(leftList, leftKeyFunction, leftTableName);
+        Map<String, Map<String, Object>> rightMap = buildJoinMap(rightList, rightKeyFunction, rightTableName);
+        leftPutAllRight(this.leftJoinMap, rightMap, isInnerJoin);
+        return join(this.leftJoinMap, rightMap);
     }
 
-    private Map<String, Map<String, Object>> buildMap(List list,
-                                                      Function function,
-                                                      String tableName) {
+    private Map<String, Map<String, Object>> buildJoinMap(List list,
+                                                          Function function,
+                                                          String tableName) {
         Map<String, List<Object>> map = (Map) list.stream().collect(Collectors.groupingBy(k -> function.apply(k), Collectors.toList()));
         Map<String, Map<String, Object>> resMap;
 //        if (map.size() < list.size()) {
@@ -156,16 +158,16 @@ public class Join<L, R, J> {
             }
             return leftMap;
         }));
-        this.newLeftMap = newLeftMap;
-        this.resList = this.newLeftMap.values().stream().collect(Collectors.toList());
+        this.resMap = newLeftMap;
+        this.resList = this.resMap.values().stream().collect(Collectors.toList());
         if (innerJoin) {
             int max = this.resList.stream().mapToInt(map -> map.size()).max().orElse(0);
             List<Map<String, Object>> collect = this.resList.stream().filter(map -> map.size() == max).collect(Collectors.toList());
             this.resList = collect;
-            int max2 = this.newLeftMap.values().stream().mapToInt(map -> map.values().size()).max().orElse(0);
+            int max2 = this.resMap.values().stream().mapToInt(map -> map.values().size()).max().orElse(0);
             Set<String> keys = newLeftMap.keySet();
             Map<String, Map<String, Object>> newMap = keys.stream().filter(key -> newLeftMap.get(key).values().size() == max2).collect(Collectors.toMap(key -> key, key -> newLeftMap.get(key)));
-            this.newLeftMap = newMap;
+            this.resMap = newMap;
         }
     }
 
@@ -182,12 +184,12 @@ public class Join<L, R, J> {
             }
             return leftRow;
         }));
-        this.joinResMap = joinResMap;
+        this.leftJoinMap = joinResMap;
         return this;
     }
 
     public Map<String, Map<String, Object>> getResMap() {
-        return this.joinResMap;
+        return this.leftJoinMap;
     }
 
     public List<J> mapping(Function<Map<String, Object>, J> mappingFunction) {
