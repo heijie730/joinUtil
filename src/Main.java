@@ -22,21 +22,26 @@ public class Main {
 
         Order order1 = new Order().setId("o1").setUserId("u1").setOrderName("小明的订单");
         Order order2 = new Order().setId("o2").setUserId("u2").setOrderName("小红的订单");
-        Order order3 = new Order().setId("o3").setUserId("u2").setOrderName("小张的订单");
+        Order order3 = new Order().setId("o3").setUserId("u3").setOrderName("小张的订单");
+        Order order4 = new Order().setId("o4").setUserId("u2").setOrderName("小红的订单2");
         List<Order> orderList = new ArrayList<>();
         orderList.add(order1);
         orderList.add(order2);
         orderList.add(order3);
+        orderList.add(order4);
 
         ReturnOrder returnOrder1 = new ReturnOrder().setId("r1").setOrderId("o1").setUserId("u1").setReturnOrderName("小明的退单");
         ReturnOrder returnOrder2 = new ReturnOrder().setId("r2").setOrderId("o2").setUserId("u2").setReturnOrderName("小红的退单");
         ReturnOrder returnOrder3 = new ReturnOrder().setId("r3").setOrderId("o3").setUserId("u3").setReturnOrderName("小张的退单");
         ReturnOrder returnOrder4 = new ReturnOrder().setId("r4").setOrderId("o4").setUserId("u4").setReturnOrderName("小吴的退单");
+        ReturnOrder returnOrder5 = new ReturnOrder().setId("r5").setOrderId("o2").setUserId("u2").setReturnOrderName("小红的退单2");
         List<ReturnOrder> returnOrderList = new ArrayList<>();
         returnOrderList.add(returnOrder1);
         returnOrderList.add(returnOrder2);
         returnOrderList.add(returnOrder3);
 //        returnOrderList.add(returnOrder4);
+        returnOrderList.add(returnOrder5);
+
 
         payRecord payRecord1 = new payRecord().setReturnOrderId("r1").setAmount("15元");
         payRecord payRecord2 = new payRecord().setReturnOrderId("r2").setAmount("16元");
@@ -48,7 +53,7 @@ public class Main {
 
         Join join = JoinUtil.leftJoin(userList, x -> x.getId(), "user", x -> orderList, x -> x.getUserId(), "order")
                 .leftJoin("order", x -> ((Order) x).getId(), x -> returnOrderList, x -> ((ReturnOrder) x).getOrderId(), "returnOrder");
-//                .leftJoin("returnOrder",x->((ReturnOrder)x).getId() ,x->payRecordList ,x->((payRecord)x).getReturnOrderId() ,"payRecord" );
+//                .innerJoin("returnOrder",x->((ReturnOrder)x).getId() ,x->payRecordList ,x->((payRecord)x).getReturnOrderId() ,"payRecord" );
 //                .leftJoin("order", x -> ((List<Order>) x).get(0).getId(), x->returnOrderList, x -> ((ReturnOrder) x).getOrderId(), "returnOrder");
 //                .leftJoin("user", x -> Optional.ofNullable(x).map(e -> (User) e).map(User::getId), x->returnOrderList, x -> ((ReturnOrder) x).getUserId(), "returnOrder");
         System.out.println("[test1 - list] --> [join1 -> user.id = order.userId , join2 -> order.id = returnOrder.orderId ]  --->");
