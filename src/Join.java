@@ -35,6 +35,7 @@ public class Join<L, R, J> {
         //重组joinResMap的key
         Map<String, Map<String, Object>> newResMap = reBuildLeftJoinMap(lastJoinTableName, this.joinResMap, lastJoinKeyFunction);
         List<String> keyList = newResMap.keySet().stream().collect(Collectors.toList());
+        System.out.println("[leftKeys]="+keyList.toString());
         List<R> rightList = rightListMappingFunction.apply(keyList);
         return join(newResMap, rightList, rightKeyFunction, rightTableName, innerJoin);
     }
@@ -93,6 +94,7 @@ public class Join<L, R, J> {
                      String rightTableName,
                      boolean innerJoin) {
         List<String> leftKeys = leftList.stream().map(leftKeyFunction::apply).collect(Collectors.toList());
+        System.out.println("[leftKeys]= " + leftKeys.toString());
         List<R> rightList = rightListFunction.apply(leftKeys);
         return join(leftList, leftKeyFunction, leftTableName, rightList, rightKeyFunction, rightTableName, innerJoin);
     }
@@ -116,13 +118,13 @@ public class Join<L, R, J> {
         Map<String, List<Object>> map = (Map) list.stream().collect(Collectors.groupingBy(k -> function.apply(k), Collectors.toList()));
         Map<String, Map<String, Object>> resMap;
 //        if (map.size() < list.size()) {
-            //表示有重复的,需要把重复的收集为list
-            resMap = map.keySet().stream().collect(Collectors.toMap(key -> key, key -> {
-                List<Object> objectList = map.get(key);
-                Map<String, Object> objectListMap = new HashMap(2);
-                objectListMap.put(tableName, objectList);
-                return objectListMap;
-            }));
+        //表示有重复的,需要把重复的收集为list
+        resMap = map.keySet().stream().collect(Collectors.toMap(key -> key, key -> {
+            List<Object> objectList = map.get(key);
+            Map<String, Object> objectListMap = new HashMap(2);
+            objectListMap.put(tableName, objectList);
+            return objectListMap;
+        }));
 //        } else {
 //            //表示没有重复,list里面只有一个元素
 //            resMap = map.keySet().stream().collect(Collectors.toMap(key -> key, key -> {
