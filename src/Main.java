@@ -16,12 +16,12 @@ public class Main {
 //        test_1_leftJoin_D_innerJoin_D();
 //        test_1_innerJoin_1();
 //        test_1_innerJoin_D();
-        test_1_innerJoin_1_innerJoin_1();
+//        test_1_innerJoin_1_innerJoin_1();
 //        test_1_innerJoin_D_innerJoin_1();
 //        test_1_innerJoin_D_innerJoin_D();
 //        test_1_innerJoin_1_leftJoin_1();
 //        test_1_innerJoin_D_leftJoin_1();
-//        test_1_innerJoin_D_leftJoin_D();
+        test_1_innerJoin_D_leftJoin_D();
 
 
     }
@@ -42,7 +42,6 @@ public class Main {
         orderList.add(order1);
         orderList.add(order2);
 //        orderList.add(order3);
-
         Join join = JoinUtil.leftJoin(userList, x -> x.getId(), "user", x -> orderList, x -> x.getUserId(), "order");
         System.out.println("[test_1_leftJoin_1] --->");
         join.getJoinNodeList().forEach(x -> System.out.println(JSON.toJSON(x)));
@@ -607,7 +606,7 @@ public class Main {
         Order order3 = new Order().setId("o3").setUserId("u3").setOrderName("小张的订单");
         Order order4 = new Order().setId("o4").setUserId("u3").setOrderName("小张的订单222");
         List<Order> orderList = new ArrayList<>();
-        orderList.add(order1);
+//        orderList.add(order1);
         orderList.add(order2);
         orderList.add(order3);
         orderList.add(order4);
@@ -1234,13 +1233,6 @@ public class Main {
 //        returnOrderList.add(returnOrder4);
         returnOrderList.add(returnOrder5);
 
-        payRecord payRecord1 = new payRecord().setReturnOrderId("r1").setAmount("15元");
-        payRecord payRecord2 = new payRecord().setReturnOrderId("r2").setAmount("16元");
-        payRecord payRecord3 = new payRecord().setReturnOrderId("r2").setAmount("17元");
-        List<payRecord> payRecordList = new ArrayList<>();
-        payRecordList.add(payRecord1);
-        payRecordList.add(payRecord2);
-        payRecordList.add(payRecord3);
 
         Join join = JoinUtil.leftJoin(userList, x -> x.getId(), "user", x -> orderList, x -> x.getUserId(), "order")
                 .leftJoin("order", x -> ((Order) x).getId(), x -> returnOrderList, x -> ((ReturnOrder) x).getOrderId(), "returnOrder");

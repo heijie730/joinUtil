@@ -28,12 +28,12 @@ public class Join<L, R> {
         return join(lastJoinTableName, lastJoinKeyFunction, rightListMappingFunction, rightKeyFunction, rightTableName, true);
     }
 
-    public Join join(String lastJoinTableName,
-                     Function<Object, String> lastJoinKeyFunction,
-                     Function<List<String>, List<R>> rightListMappingFunction,
-                     Function<R, String> rightKeyFunction,
-                     String rightTableName,
-                     boolean innerJoin) {
+    private Join join(String lastJoinTableName,
+                      Function<Object, String> lastJoinKeyFunction,
+                      Function<List<String>, List<R>> rightListMappingFunction,
+                      Function<R, String> rightKeyFunction,
+                      String rightTableName,
+                      boolean innerJoin) {
         //重新定义外键
         this.joinNodeList.stream().forEach(node -> {
             Map<String, Object> objectMap = node.getJoinRes();
@@ -50,11 +50,11 @@ public class Join<L, R> {
         return join(this.joinNodeList, rightList, rightKeyFunction, rightTableName, innerJoin);
     }
 
-    public Join join(List<JoinNode> leftJoinNodeList,
-                     List<R> rightList,
-                     Function<R, String> rightKeyFunction,
-                     String rightTableName,
-                     boolean innerJoin) {
+    private Join join(List<JoinNode> leftJoinNodeList,
+                      List<R> rightList,
+                      Function<R, String> rightKeyFunction,
+                      String rightTableName,
+                      boolean innerJoin) {
         //重组joinResMap的key
         List<JoinNode> rightJoinNodeList = buildJoinList(rightList, rightKeyFunction, rightTableName);
         return join(leftJoinNodeList, rightJoinNodeList, innerJoin);
@@ -75,10 +75,10 @@ public class Join<L, R> {
         return join(rightList, rightKeyFunction, rightTableName, innerJoin);
     }
 
-    public Join join(List<R> rightList,
-                     Function<R, String> rightKeyFunction,
-                     String rightTableName,
-                     boolean isInnerJoin) {
+    private Join join(List<R> rightList,
+                      Function<R, String> rightKeyFunction,
+                      String rightTableName,
+                      boolean isInnerJoin) {
         List<JoinNode> rightJoinNodeList = buildJoinList(rightList, rightKeyFunction, rightTableName);
         return join(this.joinNodeList, rightJoinNodeList, isInnerJoin);
     }
@@ -142,7 +142,9 @@ public class Join<L, R> {
     }
 
     private List<JoinNode> findByKey(List<JoinNode> joinNodeList, String key) {
-        Objects.requireNonNull(key);
+        if (key == null) {
+            return new ArrayList<>();
+        }
         return joinNodeList.stream().filter(node -> key.equals(node.getKey())).collect(Collectors.toList());
     }
 
@@ -151,6 +153,7 @@ public class Join<L, R> {
     }
 
     public List<Map<String, Object>> getResLsit() {
+        //todo 对一对多的记录重组为list
         List<Map<String, Object>> mapList = this.joinNodeList.stream().map(node -> node.getJoinRes()).collect(Collectors.toList());
         return mapList;
     }
