@@ -148,14 +148,35 @@ public class Join<L, R> {
         return joinNodeList.stream().filter(node -> key.equals(node.getKey())).collect(Collectors.toList());
     }
 
+    private Map<String, Object> buildByTableName(List<Map<String, Object>> mapList, String tableName) {
+        Map<String, Object> map = new HashMap();
+        for (int i = 0; i < mapList.size(); i++) {
+            Map<String, Object> map1 = mapList.get(i);
+            map.put(i + "", map1.get(tableName));
+        }
+        return map;
+    }
+
     public List<JoinNode> getJoinNodeList() {
         return this.joinNodeList;
     }
 
-    public List<Map<String, Object>> getResLsit() {
+    public List<Map<String, Object>> getResLsit(List<String> orderTableName) {
         //todo 对一对多的记录重组为list
+        //给每个table的记录赋予坐标
         List<Map<String, Object>> mapList = this.joinNodeList.stream().map(node -> node.getJoinRes()).collect(Collectors.toList());
+        //初始化 表名  坐标 对象
+        List<JoinNode> nodeList = new ArrayList<>();
+        for (String tableName : orderTableName) {
+            nodeList.add(new JoinNode().setKey(tableName).setJoinRes(buildByTableName(mapList, tableName)));
+        }
         return mapList;
+    }
+
+    private Map<String, Object> findBy(JoinNode joinNode) {
+
+
+
     }
 
 }
