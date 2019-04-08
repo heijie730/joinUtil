@@ -48,7 +48,6 @@ public class Join<L, R> {
             }
         });
         List<String> keyList = this.joinNodeList.stream().map(node -> node.getKey()).filter(key -> key != null).collect(Collectors.toList());
-        System.out.println("[leftKeys]=" + keyList.toString());
         List<R> rightList = rightListMappingFunction.apply(keyList);
         return join(this.joinNodeList, rightList, rightKeyFunction, rightTableName, innerJoin);
     }
@@ -73,7 +72,6 @@ public class Join<L, R> {
                      boolean innerJoin) {
         this.joinNodeList = buildJoinList(leftList, leftKeyFunction, leftTableName);
         List<String> leftKeys = this.joinNodeList.stream().filter(node -> node.getKey() != null).map(node -> node.getKey()).collect(Collectors.toList());
-        System.out.println("[leftKeys]= " + leftKeys.toString());
         List<R> rightList = rightListFunction.apply(leftKeys);
         return join(rightList, rightKeyFunction, rightTableName, innerJoin);
     }
@@ -164,17 +162,17 @@ public class Join<L, R> {
         return this.joinNodeList;
     }
 
-    public List<Map<String, Object>> getResLsit(List<String> orderTableName) {
-        //todo 对一对多的记录重组为list
-        //给每个table的记录赋予坐标
-        List<Map<String, Object>> mapList = this.joinNodeList.stream().map(node -> node.getJoinRes()).collect(Collectors.toList());
-        //初始化 表名  坐标 对象
-        List<JoinNode> nodeList = new ArrayList<>();
-        for (String tableName : orderTableName) {
-            nodeList.add(new JoinNode().setKey(tableName).setJoinRes(buildByTableName(mapList, tableName)));
-        }
-        return mapList;
-    }
+//    public List<Map<String, Object>> getResLsit(List<String> orderTableName) {
+//        //todo 对一对多的记录重组为list
+//        //给每个table的记录赋予坐标
+//        List<Map<String, Object>> mapList = this.joinNodeList.stream().map(node -> node.getJoinRes()).collect(Collectors.toList());
+//        //初始化 表名  坐标 对象
+//        List<JoinNode> nodeList = new ArrayList<>();
+//        for (String tableName : orderTableName) {
+//            nodeList.add(new JoinNode().setKey(tableName).setJoinRes(buildByTableName(mapList, tableName)));
+//        }
+//        return mapList;
+//    }
 
 //    private Map<String, Object> findBy(JoinNode joinNode) {
 //        Map<String, Object> joinRes = joinNode.getJoinRes();
