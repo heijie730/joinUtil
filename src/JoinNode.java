@@ -9,7 +9,7 @@ public class JoinNode {
 
     private String key;  //关联外键
 
-    private Map<String, Object>  joinRes;//key 是 表名  value 是相应实体
+    private Map<String, Object>  joinRes;//key 是 表名(别名)  value 是相应实体
 
     public String getKey() {
         return key;

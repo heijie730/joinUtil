@@ -12,8 +12,9 @@ import java.util.stream.Collectors;
  * 备注：
  **/
 public class Join<L, R> {
-
+    //每次join后的结果list
     private List<JoinNode> joinNodeList;
+
 
     public Join leftJoin(String lastJoinTableName,
                          Function<Object, String> lastJoinKeyFunction,
@@ -31,6 +32,7 @@ public class Join<L, R> {
         return join(lastJoinTableName, lastJoinKeyFunction, rightListMappingFunction, rightKeyFunction, rightTableName, true);
     }
 
+   //两次以上join调用
     private Join join(String lastJoinTableName,
                       Function<Object, String> lastJoinKeyFunction,
                       Function<List<String>, List<R>> rightListMappingFunction,

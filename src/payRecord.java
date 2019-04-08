@@ -1,7 +1,7 @@
 /**
  * 时间： 2019年04月06日  22时33分
  * 作者： lcx
- * 备注：
+ * 备注：测试实体
  **/
 public class payRecord {
     String returnOrderId;

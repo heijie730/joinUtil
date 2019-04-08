@@ -1,7 +1,7 @@
 /**
  * 时间： 2019年04月05日  12时22分
  * 作者： lcx
- * 备注：
+ * 备注：测试实体
  **/
 public class Order {
     String id;
