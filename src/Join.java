@@ -1,5 +1,8 @@
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -173,10 +176,13 @@ public class Join<L, R> {
         return mapList;
     }
 
-    private Map<String, Object> findBy(JoinNode joinNode) {
-
-
-
-    }
+//    private Map<String, Object> findBy(JoinNode joinNode) {
+//        Map<String, Object> joinRes = joinNode.getJoinRes();
+//        Map<Object, List<Object>> collect = joinRes.values().stream().collect(Collectors.groupingBy(x -> x, Collectors.toList()));
+//        //找到重复对象
+//        List<List<Object>> collect1 = collect.values().stream().filter(x -> x.size() > 1).collect(Collectors.toList());
+//        return collect1;
+//
+//    }
 
 }
