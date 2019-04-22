@@ -1,10 +1,7 @@
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * 作者 林超绪 2019/4/22 16:13
- * 备注
- */
+
 public class Dictionary<O> {
     private Map<Integer, Map<Integer, O>> value = new HashMap<>();
 
