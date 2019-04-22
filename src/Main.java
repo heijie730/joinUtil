@@ -7,24 +7,33 @@ import java.util.*;
 public class Main {
 
     public static void main(String[] args) {
-        //一对一
-        test_1_leftJoin_1();
-        //一对多
-        test_1_leftJoin_D();
-        test_1_leftJoin_1_leftJoin_1();
-        test_1_leftJoin_D_leftJoin_1();
-        test_1_leftJoin_D_leftJoin_D();
-        test_1_leftJoin_1_innerJoin_1();
-        test_1_leftJoin_D_innerJoin_1();
-        test_1_leftJoin_D_innerJoin_D();
-        test_1_innerJoin_1();
-        test_1_innerJoin_D();
-        test_1_innerJoin_1_innerJoin_1();
-        test_1_innerJoin_D_innerJoin_1();
-        test_1_innerJoin_D_innerJoin_D();
-        test_1_innerJoin_1_leftJoin_1();
-        test_1_innerJoin_D_leftJoin_1();
-        test_1_innerJoin_D_leftJoin_D();
+        Dictionary dictionary = new Dictionary();
+        int a = 100;
+        int b = 10;
+        for (int i = 1; i <= a; i++) {
+            for (int i1 = 1; i1 <= b; i1++) {
+                dictionary.put(i, i1, "第" + i + "行,第" + i1 + "列");
+            }
+        }
+        dictionary.print();
+//        //一对一
+//        test_1_leftJoin_1();
+//        //一对多
+//        test_1_leftJoin_D();
+//        test_1_leftJoin_1_leftJoin_1();
+//        test_1_leftJoin_D_leftJoin_1();
+//        test_1_leftJoin_D_leftJoin_D();
+//        test_1_leftJoin_1_innerJoin_1();
+//        test_1_leftJoin_D_innerJoin_1();
+//        test_1_leftJoin_D_innerJoin_D();
+//        test_1_innerJoin_1();
+//        test_1_innerJoin_D();
+//        test_1_innerJoin_1_innerJoin_1();
+//        test_1_innerJoin_D_innerJoin_1();
+//        test_1_innerJoin_D_innerJoin_D();
+//        test_1_innerJoin_1_leftJoin_1();
+//        test_1_innerJoin_D_leftJoin_1();
+//        test_1_innerJoin_D_leftJoin_D();
 
     }
 
@@ -71,6 +80,7 @@ public class Main {
         Join join = JoinUtil.leftJoin(userList, x -> x.getId(), "user", x -> orderList, x -> x.getUserId(), "order");
         System.out.println("[test_1_leftJoin_D] --->");
         join.getJoinNodeList().forEach(x -> System.out.println(JSON.toJSON(x)));
+
     }
 
     public static void test_1_leftJoin_1_leftJoin_1() {
@@ -174,6 +184,7 @@ public class Main {
         System.out.println("[test_1_leftJoin_D_leftJoin_D]--->");
         join.getJoinNodeList().forEach(x -> System.out.println(JSON.toJSON(x)));
     }
+
     public static void test_1_leftJoin_1_innerJoin_1() {
         User user1 = new User().setId("u1").setName("小明");
         User user2 = new User().setId("u2").setName("小红");
@@ -528,7 +539,6 @@ public class Main {
         System.out.println("[test_1_innerJoin_D_leftJoin_D]--->");
         join.getJoinNodeList().forEach(x -> System.out.println(JSON.toJSON(x)));
     }
-
 
 
 }
